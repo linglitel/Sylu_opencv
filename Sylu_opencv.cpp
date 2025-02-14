@@ -28,11 +28,12 @@ int main() {
         imshow("Original", frame);
         split(frame, channels);
         dilate(channels[0], dilated, kernel);
-        threshold(dilated, mid, 150, 255, THRESH_BINARY);
+        threshold(dilated, mid, 150, 255, THRESH_OTSU);
         edge = mid;
         //Canny(mid, edge, 150, 200, 3, true);
         findContours(edge.clone(), contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
         Mat result = frame.clone();
+        debug = frame.clone();
         for (const auto& contour : contours) {
             auto rotatedRect = minAreaRect(contour);
             Point2f vertices[4];
@@ -44,28 +45,28 @@ int main() {
                 continue;
             }
             if (w > l) l = l ^ w, w = l ^ w, l = l ^ w;
-            if (l>20)
-            {
-                continue;
+     
+            if (double(l) / double(w) <= 2) {
+            continue;
             }
-            //if (double(l) / double(w) < 1) {
-            //    continue;
-            //}
-        
-            //if (double(l) / double(w) <= 2) {
-            //continue;
-            //}
+            float angle = rotatedRect.angle;
 
+            if (abs(angle) < 70.0) {
+                //continue; // Todo: Need Fix
+            }
+            if (double(l) / double(w) >4.0)
+            {
+                //continue; // Todo: Need Fix
+            }
             for (int j = 0; j < 4; j++) {
                 line(result, vertices[j], vertices[(j + 1) % 4], Scalar(0, 0, 255), 1);
             }
-            debug = result.clone();
             Point2f center = rotatedRect.center;
-            string text = "W:" + to_string(w) + " L:" + to_string(l);
+            string text = "W:" + to_string(w) + " L:" + to_string(l)+" Angle:" + to_string(angle);
             putText(debug, text, center, FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 255, 255), 1);
-            imshow("Rotated Rectangles", result);
-            imshow("Debug Window", debug);
         }
+        imshow("Rotated Rectangles", result);
+        imshow("Debug Window", debug);
         waitKey(30);
     }
 
